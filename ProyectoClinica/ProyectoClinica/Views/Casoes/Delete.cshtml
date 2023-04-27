@@ -1,0 +1,81 @@
+﻿@model ProyectoClinica.Models.Caso
+
+@{
+    ViewData["Title"] = "Eliminar - Caso";
+}
+
+<h1>Eliminar</h1>
+
+<h3>Dese eliminar el siguiente elemento?</h3>
+<div>
+    <h4>Caso</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            Fecha de apertura
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.FechaDeApertura)
+        </dd>
+        <dt class = "col-sm-2">
+            Motivo de Consulta
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.MotivoConsulta)
+        </dd>
+        <dt class = "col-sm-2">
+            Antecedentes
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Antecedentes)
+        </dd>
+        <dt class = "col-sm-2">
+            Diagnóstico
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Diagnostico)
+        </dd>
+        <dt class = "col-sm-2">
+            Referido Por
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ReferidoPor)
+        </dd>
+        <dt class = "col-sm-2">
+            Estado
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Estado)
+        </dd>
+        <dt class = "col-sm-2">
+            Fecha de Cierre
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.FechaDeCierre)
+        </dd>
+        <dt class = "col-sm-2">
+            Motivo de Cierre
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.MotivoDeCierre)
+        </dd>
+        <dt class = "col-sm-2">
+            Paciente
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.IdpacienteNavigation.Pnombre + " " + model.IdpacienteNavigation.Snombre + " " + model.IdpacienteNavigation.Papellido + " " + model.IdpacienteNavigation.Sapellido)
+        </dd>
+        <dt class = "col-sm-2">
+            Usuario creador
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.UsuarioCreaNavigation.User1)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Eliminar" class="btn btn-danger" /> |
+        <a asp-action="Index">Back to List</a>
+    </form>
+</div>

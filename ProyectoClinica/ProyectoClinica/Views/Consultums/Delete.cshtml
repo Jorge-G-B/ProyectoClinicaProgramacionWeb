@@ -1,0 +1,63 @@
+﻿@model ProyectoClinica.Models.Consultum
+
+@{
+    ViewData["Title"] = "Eliminar - Consulta";
+}
+
+<h1>Eliminar</h1>
+
+<h3>¿Eliminar la siguiente consulta?</h3>
+<div>
+    <h4>Consulta</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            Fecha de consulta
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.FechaDeConsulta)
+        </dd>
+        <dt class="col-sm-2">
+            Datos subjetivos
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DatosSubjetivos)
+        </dd>
+        <dt class="col-sm-2">
+            Datos objetivos
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.DatosObjetivos)
+        </dd>
+        <dt class="col-sm-2">
+            Plan terapéutico
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.PlanTerapuetico)
+        </dd>
+        <dt class="col-sm-2">
+            Datos nuevos
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.NuevosDatos)
+        </dd>
+        <dt class="col-sm-2">
+            Estado
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Estado)
+        </dd>
+        <dt class="col-sm-2">
+            Número de caso
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.IdcasoNavigation.Id)
+        </dd>
+    </dl>
+    
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="Id" />
+        <input type="submit" value="Eliminar" class="btn btn-danger" /> |
+        <a asp-action="Index">Regresar a la lista</a>
+    </form>
+</div>

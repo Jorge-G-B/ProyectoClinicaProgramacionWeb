@@ -1,0 +1,58 @@
+﻿@model ProyectoClinica.Models.Consultum
+
+@{
+    ViewData["Title"] = "Editar - Caso";
+}
+
+<h1>Editar</h1>
+
+<h4>Consulta</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="Idcaso" class="control-label">Número de caso</label>
+                <select asp-for="Idcaso" class ="form-control" asp-items="ViewBag.Idcaso"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="FechaDeConsulta" class="control-label">Fecha de consulta</label>
+                <input asp-for="FechaDeConsulta" class="form-control" />
+                <span asp-validation-for="FechaDeConsulta" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DatosSubjetivos" class="control-label">Datos subjetivos</label>
+                <input asp-for="DatosSubjetivos" class="form-control" />
+                <span asp-validation-for="DatosSubjetivos" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DatosObjetivos" class="control-label">Datos objetivos</label>
+                <input asp-for="DatosObjetivos" class="form-control" />
+                <span asp-validation-for="DatosObjetivos" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PlanTerapuetico" class="control-label">Plan terapéutico</label>
+                <input asp-for="PlanTerapuetico" class="form-control" />
+                <span asp-validation-for="PlanTerapuetico" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="NuevosDatos" class="control-label">Nuevos datos</label>
+                <input asp-for="NuevosDatos" class="form-control" />
+                <span asp-validation-for="NuevosDatos" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Regresar a la lista</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,53 @@
+﻿@model IEnumerable<ProyectoClinica.Models.Caso>
+
+@{
+    ViewData["Title"] = "Index - Casoyu";
+}
+
+<h1>Listado de casos</h1>
+
+<p>
+    <a asp-action="Create">Crear nuevo caso</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Fecha de Apertura
+            </th>
+            <th>
+                Diagnostico
+            </th>
+            <th>
+                Estado
+            </th>
+            <th>
+                Paciente
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaDeApertura)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Diagnostico)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Estado)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IdpacienteNavigation.Pnombre +" "+ item.IdpacienteNavigation.Papellido)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> 
+                <a asp-action="Details" asp-route-id="@item.Id">Detalles</a> 
+                <a asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

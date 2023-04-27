@@ -1,0 +1,47 @@
+﻿@model IEnumerable<ProyectoClinica.Models.Consultum>
+
+@{
+    ViewData["Title"] = "Index - Consulta";
+}
+
+<h1>Lista de consultas</h1>
+
+<p>
+    <a asp-action="Create">Crear nueva consulta</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Fecha de Consulta
+            </th>
+            <th>
+                Estado
+            </th>
+            <th>
+               Paciente
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FechaDeConsulta)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Estado)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IdcasoNavigation.IdpacienteNavigation.Pnombre + " " + item.IdcasoNavigation.IdpacienteNavigation.Papellido)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> 
+                <a asp-action="Details" asp-route-id="@item.Id">Detalles</a> 
+                <a asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

@@ -1,0 +1,46 @@
+﻿@model IEnumerable<ProyectoClinica.Models.User>
+
+@{
+    ViewData["Title"] = "Index - Usuario";
+}
+
+<h1>Lista de Usuario</h1>
+
+<p>
+    <a asp-action="Create">Crear Nuevo Usuario</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Usuario
+            </th>
+            <th>
+                Correo
+            </th>
+            <th>
+                Rol
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.User1)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Correo)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.RolNavigation.Description)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> |
+                <a asp-action="Details" asp-route-id="@item.Id">Detalles</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Eliminar</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

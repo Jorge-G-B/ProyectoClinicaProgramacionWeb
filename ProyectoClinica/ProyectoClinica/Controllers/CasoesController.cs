@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ClinicaModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProyectoClinica.Models;
+using ProyectoClinica.Services;
 
 namespace ProyectoClinica.Controllers
 {
@@ -18,38 +21,45 @@ namespace ProyectoClinica.Controllers
             _context = new DbclinicaContext();
         }
 
+        [Authorize]
         // GET: Casoes
         public async Task<IActionResult> Index()
         {
-            var dbclinicaContext = _context.Casos.Include(c => c.IdpacienteNavigation).Include(c => c.UsuarioCreaNavigation);
-            return View(await dbclinicaContext.ToListAsync());
+            IEnumerable<ClinicaModels.Caso> cases = await APIServices.GetCases();
+            foreach (var caso in cases)
+            {
+                caso.UsuarioCreaNavigation = await APIServices.GetUser(caso.UsuarioCrea);
+                caso.IdpacienteNavigation = await APIServices.GetPacient(caso.Idpaciente);
+                caso.IdpacienteNavigation.NombreC = caso.IdpacienteNavigation.Pnombre + " " + caso.IdpacienteNavigation.Papellido;
+                caso.IdpacienteNavigation.NombreF = caso.IdpacienteNavigation.Pnombre + " " + caso.IdpacienteNavigation.Snombre +
+                     " " + caso.IdpacienteNavigation.Papellido + " " + caso.IdpacienteNavigation.Sapellido;
+            }
+            return View(cases);
         }
 
         // GET: Casoes/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Casos == null)
-            {
-                return NotFound();
-            }
-
-            var caso = await _context.Casos
-                .Include(c => c.IdpacienteNavigation)
-                .Include(c => c.UsuarioCreaNavigation)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (caso == null)
-            {
-                return NotFound();
-            }
-
+            ClinicaModels.Caso caso = await APIServices.GetCase(id);
+            caso.UsuarioCreaNavigation = await APIServices.GetUser(caso.UsuarioCrea);
+            caso.IdpacienteNavigation = await APIServices.GetPacient(caso.Idpaciente);
+            caso.IdpacienteNavigation.NombreC = caso.IdpacienteNavigation.Pnombre + " " + caso.IdpacienteNavigation.Papellido;
+            caso.IdpacienteNavigation.NombreF = caso.IdpacienteNavigation.Pnombre + " " + caso.IdpacienteNavigation.Snombre +
+                 " " + caso.IdpacienteNavigation.Papellido + " " + caso.IdpacienteNavigation.Sapellido;
             return View(caso);
         }
 
         // GET: Casoes/Create
-        public IActionResult Create()
+        [Authorize]
+        public async Task<IActionResult> Create()
         {
-            ViewData["Idpaciente"] = new SelectList(_context.Pacientes, "Id", "Id");
-            ViewData["UsuarioCrea"] = new SelectList(_context.Users, "Id", "Id");
+            var pacients = await APIServices.GetPacients();
+            foreach (var paciente in pacients)
+            {
+                paciente.NombreC = paciente.Pnombre + " " + paciente.Papellido;
+            }
+            ViewData["Idpaciente"] = new SelectList(pacients, "Id", "NombreC");
             return View();
         }
 
@@ -58,116 +68,67 @@ namespace ProyectoClinica.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FechaDeApertura,UsuarioCrea,Idpaciente,MotivoConsulta,Antecedentes,Diagnostico,ReferidoPor,Estado,FechaDeCierre,MotivoDeCierre")] Caso caso)
+        [Authorize]
+        public async Task<IActionResult> Create(ClinicaModels.Caso caso)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(caso);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["Idpaciente"] = new SelectList(_context.Pacientes, "Id", "Id", caso.Idpaciente);
-            ViewData["UsuarioCrea"] = new SelectList(_context.Users, "Id", "Id", caso.UsuarioCrea);
-            return View(caso);
-        }
-
-        // GET: Casoes/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null || _context.Casos == null)
-            {
-                return NotFound();
-            }
-
-            var caso = await _context.Casos.FindAsync(id);
-            if (caso == null)
-            {
-                return NotFound();
-            }
-            ViewData["Idpaciente"] = new SelectList(_context.Pacientes, "Id", "Id", caso.Idpaciente);
-            ViewData["UsuarioCrea"] = new SelectList(_context.Users, "Id", "Id", caso.UsuarioCrea);
-            return View(caso);
-        }
-
-        // POST: Casoes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FechaDeApertura,UsuarioCrea,Idpaciente,MotivoConsulta,Antecedentes,Diagnostico,ReferidoPor,Estado,FechaDeCierre,MotivoDeCierre")] Caso caso)
-        {
-            if (id != caso.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(caso);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!CasoExists(caso.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["Idpaciente"] = new SelectList(_context.Pacientes, "Id", "Id", caso.Idpaciente);
-            ViewData["UsuarioCrea"] = new SelectList(_context.Users, "Id", "Id", caso.UsuarioCrea);
-            return View(caso);
-        }
-
-        // GET: Casoes/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null || _context.Casos == null)
-            {
-                return NotFound();
-            }
-
-            var caso = await _context.Casos
-                .Include(c => c.IdpacienteNavigation)
-                .Include(c => c.UsuarioCreaNavigation)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (caso == null)
-            {
-                return NotFound();
-            }
-
-            return View(caso);
-        }
-
-        // POST: Casoes/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            if (_context.Casos == null)
-            {
-                return Problem("Entity set 'DbclinicaContext.Casos'  is null.");
-            }
-            var caso = await _context.Casos.FindAsync(id);
-            if (caso != null)
-            {
-                _context.Casos.Remove(caso);
-            }
-            
-            await _context.SaveChangesAsync();
+            caso.Estado = "Activo";
+            caso.MotivoDeCierre = " ";
+            caso.UsuarioCrea = 6;
+            await APIServices.CreateCase(caso);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool CasoExists(int id)
+        public async Task<IActionResult> Edit(int? id)
         {
-          return (_context.Casos?.Any(e => e.Id == id)).GetValueOrDefault();
+            var caso = await APIServices.GetCase(id);
+            var pacients = await APIServices.GetPacients();
+            foreach (var paciente in pacients)
+            {
+                paciente.NombreC = paciente.Pnombre + " " + paciente.Papellido;
+            }
+            ViewData["Idpaciente"] = new SelectList(pacients, "Id", "NombreC");
+            return View(caso);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> Edit(ClinicaModels.Caso caso)
+        {
+            caso.UsuarioCrea = 6;
+            await APIServices.EditCase(caso);
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Delete(int? id)
+        {
+            ClinicaModels.Caso caso = await APIServices.GetCase(id);
+            var pacients = await APIServices.GetPacients();
+            foreach (var paciente in pacients)
+            {
+                paciente.NombreF = paciente.Pnombre + " " + paciente.Snombre +
+                 " " + paciente.Papellido + " " + paciente.Sapellido; ;
+            }
+            return View(caso);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            await APIServices.DeleteCase(id);
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<JsonResult> GetCaseJson()
+        {
+            int id = (short)Convert.ToInt32(HttpContext.Request.Form["caseId"].FirstOrDefault().ToString());
+            var rol = await APIServices.GetCase(id);
+            var jsonresult = new { rol };
+            return Json(jsonresult);
         }
     }
 }

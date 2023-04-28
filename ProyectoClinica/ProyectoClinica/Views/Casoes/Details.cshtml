@@ -1,4 +1,4 @@
-﻿@model ProyectoClinica.Models.Caso
+﻿@model ClinicaModels.Caso
 
 @{
     ViewData["Title"] = "Detalles - Caso";
@@ -62,7 +62,7 @@
             Paciente
         </dt>
         <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.IdpacienteNavigation.Pnombre + " " + model.IdpacienteNavigation.Snombre + " " + model.IdpacienteNavigation.Papellido + " " + model.IdpacienteNavigation.Sapellido)
+            @Html.DisplayFor(model => model.IdpacienteNavigation.NombreF)
         </dd>
         <dt class="col-sm-2">
             Usuario creador
@@ -73,6 +73,6 @@
     </dl>
 </div>
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model?.Id">Editar</a> |
+    <a asp-action="Index">Regresar a la Lista</a>
 </div>

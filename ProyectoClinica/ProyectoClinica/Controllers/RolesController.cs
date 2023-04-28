@@ -8,6 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using NuGet.Protocol.Plugins;
 using ProyectoClinica.Models;
 using ClinicaModels;
+using ProyectoClinica.Services;
+using System.Xml.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ProyectoClinica.Controllers
 {
@@ -21,148 +24,78 @@ namespace ProyectoClinica.Controllers
         }
 
         // GET: Roles
+        [Authorize]
         public async Task<IActionResult> Index()
         {
-              return _context.Roles != null ? 
-                          View(await _context.Roles.ToListAsync()) :
-                          Problem("Entity set 'DbclinicaContext.Roles'  is null.");
+            IEnumerable<Rol> roles = await APIServices.GetRoles();
+            return View(roles);
         }
 
+        [Authorize]
         // GET: Roles/Details/5
         public async Task<IActionResult> Details(short? id)
         {
-            if (id == null || _context.Roles == null)
-            {
-                return NotFound();
-            }
-
-            var role = await _context.Roles
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            return View(role);
+            var rol = await APIServices.GetRole(id);
+            return View(rol);
         }
 
-        // GET: Roles/Create
+        [Authorize]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Roles/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Rol role)
+        [Authorize]
+        public async Task<IActionResult> Create([Bind("Id,Description")] Rol rol)
         {
-            if (ModelState.IsValid)
-            {
-                Role _role = new Role()
-                {
-                    Description = role.Description,
-                };
-                _context.Add(_role);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(role);
-        }
-
-        // GET: Roles/Edit/5
-        public async Task<IActionResult> Edit(short? id)
-        {
-            if (id == null || _context.Roles == null)
-            {
-                return NotFound();
-            }
-
-            var role = await _context.Roles.FindAsync(id);
-            if (role == null)
-            {
-                return NotFound();
-            }
-            return View(role);
-        }
-
-        // POST: Roles/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(short id, [Bind("Id,Description")] Role role)
-        {
-            if (id != role.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(role);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!RoleExists(role.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(role);
-        }
-
-        // GET: Roles/Delete/5
-        public async Task<IActionResult> Delete(short? id)
-        {
-            if (id == null || _context.Roles == null)
-            {
-                return NotFound();
-            }
-
-            var role = await _context.Roles
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            return View(role);
-        }
-
-        // POST: Roles/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(short id)
-        {
-            if (_context.Roles == null)
-            {
-                return Problem("Entity set 'DbclinicaContext.Roles'  is null.");
-            }
-            var role = await _context.Roles.FindAsync(id);
-            if (role != null)
-            {
-                _context.Roles.Remove(role);
-            }
-            
-            await _context.SaveChangesAsync();
+            await APIServices.CreateRole(rol);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool RoleExists(short id)
+
+        [Authorize]
+        public async Task<IActionResult> Edit(short? id)
         {
-          return (_context.Roles?.Any(e => e.Id == id)).GetValueOrDefault();
+            var rol = await APIServices.GetRole(id);
+            return View(rol);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Description")] Rol rol)
+        {
+            await APIServices.EditRole(rol);
+            return RedirectToAction(nameof(Index));
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Delete(short? id)
+        {
+            var rol = await APIServices.GetRole(id);
+            return View(rol);
+        }
+
+        // POST: Movies/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> DeleteConfirmed(short id)
+        {
+            await APIServices.DeleteRole(id);
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<JsonResult> GetRoleJson()
+        {
+            short id = (short)Convert.ToInt32(HttpContext.Request.Form["roleId"].FirstOrDefault().ToString());
+            var rol = await APIServices.GetRole(id);
+            var jsonresult = new { rol };
+            return Json(jsonresult);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿@model ProyectoClinica.Models.Consultum
+﻿@model ClinicaModels.Consulta
 
 @{
     ViewData["Title"] = "Eliminar - Consulta";
@@ -52,6 +52,12 @@
         </dt>
         <dd class="col-sm-10">
             @Html.DisplayFor(model => model.IdcasoNavigation.Id)
+        </dd>
+        <dt class="col-sm-2">
+            Paciente
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.IdcasoNavigation.IdpacienteNavigation.NombreC)
         </dd>
     </dl>
     

@@ -1,4 +1,4 @@
-﻿@model ProyectoClinica.Models.Caso
+﻿@model ClinicaModels.Caso
 
 @{
     ViewData["Title"] = "Edit";
@@ -38,6 +38,21 @@
                 <span asp-validation-for="Diagnostico" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <label asp-for="Estado" class="control-label">Estado</label>
+                <input asp-for="Estado" class="form-control" />
+                <span asp-validation-for="Estado" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FechaDeCierre" class="control-label">Fecha de cierre</label>
+                <input asp-for="FechaDeCierre" class="form-control" />
+                <span asp-validation-for="FechaDeCierre" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="MotivoDeCierre" class="control-label">Motivo de Cierre</label>
+                <input asp-for="MotivoDeCierre" class="form-control" />
+                <span asp-validation-for="MotivoDeCierre" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="ReferidoPor" class="control-label">Referido por</label>
                 <input asp-for="ReferidoPor" class="form-control" />
                 <span asp-validation-for="ReferidoPor" class="text-danger"></span>
@@ -50,7 +65,7 @@
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Index">Regresar a la lista</a>
 </div>
 
 @section Scripts {

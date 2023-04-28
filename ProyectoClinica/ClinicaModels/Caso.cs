@@ -29,5 +29,8 @@ namespace ClinicaModels
         public DateTime FechaDeCierre { get; set; }
 
         public string MotivoDeCierre { get; set; } = null!;
+
+        public virtual Paciente? IdpacienteNavigation { get; set; } = null!;
+        public virtual Usuario? UsuarioCreaNavigation { get; set; } = null!;
     }
 }

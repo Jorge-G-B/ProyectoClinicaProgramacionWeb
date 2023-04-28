@@ -1,151 +1,113 @@
 ﻿using ClinicaModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Transactions;
-using ClinicaModels;
 using APIClinica.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace APIClinica.Controllers
 {
     [ApiController]
-    [Route("Paciente")]
+    [Route("Pacient")]
     public class PacienteController : Controller
     {
-        [Route("GetPacientesList")]
-        [HttpGet]
-        public async Task<IEnumerable<ClinicaModels.Paciente>> GetList()
+        [HttpGet("GetPacientsList")]
+        public async Task<ActionResult<IEnumerable<Models.Paciente>>> GetList()
         {
+
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            IEnumerable<ClinicaModels.Paciente> pacientes = _ClinicaContext.Pacientes.Select(s =>
-            new ClinicaModels.Paciente
+            if (_ClinicaContext.Pacientes == null)
             {
-                Nombre = string.Format("{0} {1} {2} {3}", s.Pnombre, s.Snombre, s.Papellido, s.Sapellido),
-                Pnombre = s.Pnombre,
-                Snombre = s.Snombre,
-                Papellido = s.Papellido,
-                Sapellido = s.Sapellido,
-                Edad = s.Edad,
-                Telefono = s.Telefono,
-                FechaDeNacimiento = s.FechaDeNacimiento,
-                Email = s.Email,
-                Sexo = s.Sexo,
-                NombreResponsable = s.NombreResponsable,
-                TelResponsable = s.TelResponsable
+                return NotFound();
             }
-            ).ToList();
-            return pacientes;
+            return await _ClinicaContext.Pacientes.ToListAsync();
         }
 
-        [Route("GetPaciente")]
-        [HttpGet]
-        public ClinicaModels.Paciente Get(int id)
+        [HttpGet("GetPacient/{id}")]
+        public async Task<ActionResult<Models.Paciente>> Get(int id)
         {
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            ClinicaModels.Paciente usuario = _ClinicaContext.Pacientes.Select(s =>
-            new ClinicaModels.Paciente
+            if (_ClinicaContext.Pacientes == null)
             {
-                Id = s.Id,
-                Nombre = string.Format("{0} {1} {2} {3}", s.Pnombre, s.Snombre, s.Papellido, s.Sapellido),
-                Pnombre = s.Pnombre,
-                Snombre = s.Snombre,
-                Papellido = s.Papellido,
-                Sapellido = s.Sapellido,
-                Edad = s.Edad,
-                Telefono = s.Telefono,
-                FechaDeNacimiento = s.FechaDeNacimiento,
-                Email = s.Email,
-                Sexo = s.Sexo,
-                NombreResponsable = s.NombreResponsable,
-                TelResponsable = s.TelResponsable
+                return NotFound();
             }
-            ).FirstOrDefault(s => s.Id == id);
-            return usuario;
+            var pacient = await _ClinicaContext.Pacientes.FindAsync(id);
+
+            if (pacient == null)
+            {
+                return NotFound();
+            }
+            return pacient;
         }
 
-        [Route("CreatePaciente")]
-        [HttpPost]
-        public async void Create(ClinicaModels.Paciente paciente)
+
+        [HttpPut("EditPacient/{id}")]
+        public async Task<IActionResult> Put(int id, Models.Paciente pacient)
         {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (id != pacient.Id)
+            {
+                return BadRequest();
+            }
+
+            _ClinicaContext.Entry(pacient).State = EntityState.Modified;
+
             try
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                Models.Paciente _paciente = new Models.Paciente
-                {
-                    Pnombre = paciente.Pnombre,
-                    Snombre = paciente.Snombre,
-                    Papellido = paciente.Papellido,
-                    Sapellido = paciente.Sapellido,
-                    Edad = paciente.Edad,
-                    Telefono = paciente.Telefono,
-                    FechaDeNacimiento = paciente.FechaDeNacimiento,
-                    Email = paciente.Email,
-                    Sexo = paciente.Sexo,
-                    NombreResponsable = paciente.NombreResponsable,
-                    TelResponsable = paciente.TelResponsable
-                };
-                _ClinicaContext.Pacientes.Add(_paciente);
                 await _ClinicaContext.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch (DbUpdateConcurrencyException)
             {
-
-            }
-        }
-
-        [Route("DeletePaciente")]
-        [HttpDelete]
-        public async void Delete(int id)
-        {
-            using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                try
+                if (!PacientExists(id))
                 {
-                    DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                    var paciente = await _ClinicaContext.Pacientes.FindAsync(id);
-                    if (paciente != null)
-                    {
-                        _ClinicaContext.Pacientes.Remove(paciente);
-                    }
-                    await _ClinicaContext.SaveChangesAsync();
-                    transaction.Complete();
+                    return NotFound();
                 }
-                catch (Exception ex)
+                else
                 {
-                    // Revertir la transacción
-                    transaction.Dispose();
                     throw;
                 }
             }
+
+            return NoContent();
         }
 
-        [Route("EditPaciente")]
-        [HttpPut]
-        public async void Edit(ClinicaModels.Paciente paciente)
+        [HttpPost("CreatePacient")]
+        public async Task<ActionResult<Models.Paciente>> Post(Models.Paciente pacient)
         {
-            try
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Pacientes == null)
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                Models.Paciente _paciente = new Models.Paciente
-                {
-                    Id = paciente.Id,
-                    Pnombre = paciente.Pnombre,
-                    Snombre = paciente.Snombre,
-                    Papellido = paciente.Papellido,
-                    Sapellido = paciente.Sapellido,
-                    Edad = paciente.Edad,
-                    Telefono = paciente.Telefono,
-                    FechaDeNacimiento = paciente.FechaDeNacimiento,
-                    Email = paciente.Email,
-                    Sexo = paciente.Sexo,
-                    NombreResponsable = paciente.NombreResponsable,
-                    TelResponsable = paciente.TelResponsable
-                };
-                _ClinicaContext.Pacientes.Update(_paciente);
-                await _ClinicaContext.SaveChangesAsync();
+                return Problem("Entity set 'ClinicaContext.Pacientes' is null.");
             }
-            catch (Exception ex)
-            {
+            _ClinicaContext.Pacientes.Add(pacient);
+            await _ClinicaContext.SaveChangesAsync();
 
+            return CreatedAtAction("Get", new { id = pacient.Id }, pacient);
+        }
+
+        [HttpDelete("DeletePacient/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Pacientes == null)
+            {
+                return NotFound();
             }
+            var pacient = await _ClinicaContext.Pacientes.FindAsync(id);
+            if (pacient == null)
+            {
+                return NotFound();
+            }
+
+            _ClinicaContext.Pacientes.Remove(pacient);
+            await _ClinicaContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool PacientExists(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            return (_ClinicaContext.Pacientes?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

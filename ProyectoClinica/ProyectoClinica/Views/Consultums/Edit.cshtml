@@ -1,4 +1,4 @@
-﻿@model ProyectoClinica.Models.Consultum
+﻿@model ClinicaModels.Consulta
 
 @{
     ViewData["Title"] = "Editar - Caso";
@@ -41,6 +41,11 @@
                 <label asp-for="NuevosDatos" class="control-label">Nuevos datos</label>
                 <input asp-for="NuevosDatos" class="form-control" />
                 <span asp-validation-for="NuevosDatos" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Estado" class="control-label">Estado</label>
+                <input asp-for="Estado" class="form-control" />
+                <span asp-validation-for="Estado" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <input type="submit" value="Guardar" class="btn btn-primary" />

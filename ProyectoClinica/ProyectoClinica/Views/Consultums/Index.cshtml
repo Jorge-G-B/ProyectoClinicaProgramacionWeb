@@ -1,4 +1,4 @@
-﻿@model IEnumerable<ProyectoClinica.Models.Consultum>
+﻿@model IEnumerable<ClinicaModels.Consulta>
 
 @{
     ViewData["Title"] = "Index - Consulta";
@@ -21,6 +21,9 @@
             <th>
                Paciente
             </th>
+            <th>
+                Número de caso
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -34,8 +37,11 @@
                 @Html.DisplayFor(modelItem => item.Estado)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.IdcasoNavigation.IdpacienteNavigation.Pnombre + " " + item.IdcasoNavigation.IdpacienteNavigation.Papellido)
+                @Html.DisplayFor(modelItem => item.IdcasoNavigation.IdpacienteNavigation.NombreC)
             </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.IdcasoNavigation.Id)
+                </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Editar</a> 
                 <a asp-action="Details" asp-route-id="@item.Id">Detalles</a> 

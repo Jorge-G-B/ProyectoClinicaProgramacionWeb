@@ -2,109 +2,113 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Transactions;
 using ClinicaModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace APIClinica.Controllers
 {
     [ApiController]
-    [Route("Rol")]
+    [Route("Role")]
     public class RoleController : Controller
     {
-        [Route("GetRolesList")]
-        [HttpGet]
-        public async Task<IEnumerable<Rol>> GetList()
+        [HttpGet("GetRolesList")]
+        public async Task<ActionResult<IEnumerable<Role>>> GetList()
         {
+
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            IEnumerable<Rol> roles = _ClinicaContext.Roles.Select(s =>
-            new Rol
+            if (_ClinicaContext.Roles == null)
             {
-                Id = s.Id,
-                Description = s.Description
+                return NotFound();
             }
-            ).ToList();
-            return roles;
+            return await _ClinicaContext.Roles.ToListAsync();
         }
 
-        [Route("GetRol")]
-        [HttpGet]
-        public Rol Get(int id)
+        [HttpGet("GetRole/{id}")]
+        public async Task<ActionResult<Role>> Get(short id)
         {
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            Rol rol = _ClinicaContext.Roles.Select(s =>
-            new Rol
+            if (_ClinicaContext.Roles == null)
             {
-                Id = s.Id,
-                Description = s.Description
+                return NotFound();
             }
-            ).FirstOrDefault(s => s.Id == id);
+            var rol = await _ClinicaContext.Roles.FindAsync(id);
+
+            if (rol == null)
+            {
+                return NotFound();
+            }
+
             return rol;
         }
 
-        [Route("CreateRol")]
-        [HttpPost]
-        public async void Create(Rol rol)
+
+        [HttpPut("EditRole/{id}")]
+        public async Task<IActionResult> Put(short id, Role rol)
         {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (id != rol.Id)
+            {
+                return BadRequest();
+            }
+
+            _ClinicaContext.Entry(rol).State = EntityState.Modified;
+
             try
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                Role _rol = new Role
-                {
-                    Description = rol.Description
-                };
-                _ClinicaContext.Roles.Add(_rol);
                 await _ClinicaContext.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch (DbUpdateConcurrencyException)
             {
-
-            }
-        }
-
-        [Route("DeleteRol")]
-        [HttpDelete]
-        public async void Delete(int id)
-        {
-            using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                try
+                if (!RolExists(id))
                 {
-                    short ID = (short)id;
-                    DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                    var rol = await _ClinicaContext.Roles.FindAsync(ID);
-                    if (rol != null)
-                    {
-                        _ClinicaContext.Roles.Remove(rol);
-                    }
-                    await _ClinicaContext.SaveChangesAsync();
-                    transaction.Complete();
+                    return NotFound();
                 }
-                catch (Exception ex)
+                else
                 {
-                    // Revertir la transacción
-                    transaction.Dispose();
                     throw;
                 }
             }
+
+            return NoContent();
         }
 
-        [Route("EditRol")]
-        [HttpPut]
-        public async void Edit(Rol rol)
+        [HttpPost("CreateRole")]
+        public async Task<ActionResult<Role>> Post(Role rol)
         {
-            try
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Roles == null)
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                Role _rol = new Role
-                {
-                    Id = rol.Id,
-                    Description = rol.Description
-                };
-                _ClinicaContext.Roles.Update(_rol);
-                await _ClinicaContext.SaveChangesAsync();
+                return Problem("Entity set 'ClinicaContext.Roles' is null.");
             }
-            catch (Exception ex)
-            {
+            _ClinicaContext.Roles.Add(rol);
+            await _ClinicaContext.SaveChangesAsync();
 
+            return CreatedAtAction("Get", new { id = rol.Id }, rol);
+        }
+
+        [HttpDelete("DeleteRole/{id}")]
+        public async Task<IActionResult> Delete(short id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Roles == null)
+            {
+                return NotFound();
             }
+            var rol = await _ClinicaContext.Roles.FindAsync(id);
+            if (rol == null)
+            {
+                return NotFound();
+            }
+
+            _ClinicaContext.Roles.Remove(rol);
+            await _ClinicaContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool RolExists(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            return (_ClinicaContext.Roles?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

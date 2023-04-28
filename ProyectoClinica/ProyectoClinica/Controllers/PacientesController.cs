@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoClinica.Models;
 using ClinicaModels;
 using NuGet.Protocol.Plugins;
+using ProyectoClinica.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ProyectoClinica.Controllers
 {
@@ -20,197 +22,70 @@ namespace ProyectoClinica.Controllers
             _context = new DbclinicaContext();
         }
 
-        // GET: Pacientes
+        [Authorize]
         public async Task<IActionResult> Index()
         {
-            var listPacientes = _context.Pacientes;
-            if(listPacientes != null)
-            {
-                List<ClinicaModels.Paciente> pacientes = new List<ClinicaModels.Paciente>();
-                foreach(Models.Paciente paciente in listPacientes)
-                {
-                    pacientes.Add(new ClinicaModels.Paciente()
-                    {
-                        Pnombre = paciente.Pnombre,
-                        Snombre = paciente.Snombre,
-                        Papellido = paciente.Papellido,
-                        Sapellido = paciente.Papellido,
-                        Nombre = string.Format("{0} {1} {2} {3}", paciente.Pnombre, paciente.Snombre, paciente.Papellido, paciente.Sapellido),
-                        Sexo = paciente.Sexo,
-                        Edad = paciente.Edad,
-                        Telefono = paciente.Telefono,
-                        Email = paciente.Email,
-                        FechaDeNacimiento = paciente.FechaDeNacimiento,
-                        NombreResponsable = paciente.NombreResponsable,
-                        TelResponsable = paciente.TelResponsable,
-                    });
-                }
-                return View(pacientes);
-            }
-            return Problem("Entity set 'DbclinicaContext.Pacientes'  is null.");
-
-                          
+            IEnumerable<ClinicaModels.Paciente> pacient = await APIServices.GetPacients();
+            return View(pacient);
         }
 
-        // GET: Pacientes/Details/5
+        // GET: Roles/Details/5
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Pacientes == null)
-            {
-                return NotFound();
-            }
-
-            var paciente = await _context.Pacientes
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (paciente == null)
-            {
-                return NotFound();
-            }
-
-            return View(paciente);
+            var pacient = await APIServices.GetPacient(id);
+            return View(pacient);
         }
-
-        // GET: Pacientes/Create
+        [Authorize]
         public IActionResult Create()
         {
             return View();
         }
-
-        // POST: Pacientes/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ClinicaModels.Paciente paciente)
+        public async Task<IActionResult> Create(ClinicaModels.Paciente pacient)
         {
-            if (ModelState.IsValid)
-            {
-                Models.Paciente _paciente = new Models.Paciente()
-                {
-                    Pnombre = paciente.Pnombre,
-                    Snombre = paciente.Snombre,
-                    Papellido = paciente.Papellido,
-                    Sapellido = paciente.Papellido,
-                    Sexo = paciente.Sexo,
-                    Edad = (short)paciente.Edad,
-                    Telefono = paciente.Telefono,
-                    Email = paciente.Email,
-                    FechaDeNacimiento = paciente.FechaDeNacimiento,
-                    NombreResponsable = paciente.NombreResponsable,
-                    TelResponsable = paciente.TelResponsable,
-                };
-                _context.Add(_paciente);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(paciente);
+            await APIServices.CreatePacient(pacient);
+            return RedirectToAction(nameof(Index));
         }
-
-        // GET: Pacientes/Edit/5
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Pacientes == null)
-            {
-                return NotFound();
-            }
-
-            var paciente = await _context.Pacientes.FindAsync(id);
-            if (paciente == null)
-            {
-                return NotFound();
-            }
-            return View(paciente);
+            var pacient = await APIServices.GetPacient(id);
+            return View(pacient);
         }
-
-        // POST: Pacientes/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ClinicaModels.Paciente paciente)
+        public async Task<IActionResult> Edit(int id, ClinicaModels.Paciente pacient)
         {
-            if (id != paciente.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    Models.Paciente _paciente = new Models.Paciente()
-                    {
-                        Pnombre = paciente.Pnombre,
-                        Snombre = paciente.Snombre,
-                        Papellido = paciente.Papellido,
-                        Sapellido = paciente.Papellido,
-                        Sexo = paciente.Sexo,
-                        Edad = (short)paciente.Edad,
-                        Telefono = paciente.Telefono,
-                        Email = paciente.Email,
-                        FechaDeNacimiento = paciente.FechaDeNacimiento,
-                        NombreResponsable = paciente.NombreResponsable,
-                        TelResponsable = paciente.TelResponsable,
-                    };
-                    _context.Update(paciente);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!PacienteExists(paciente.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(paciente);
+            await APIServices.EditPacient(pacient);
+            return RedirectToAction(nameof(Index));
         }
-
-        // GET: Pacientes/Delete/5
+        [Authorize]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Pacientes == null)
-            {
-                return NotFound();
-            }
-
-            var paciente = await _context.Pacientes
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (paciente == null)
-            {
-                return NotFound();
-            }
-
-            return View(paciente);
+            var rol = await APIServices.GetPacient(id);
+            return View(rol);
         }
-
-        // POST: Pacientes/Delete/5
+        [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(short id)
         {
-            if (_context.Pacientes == null)
-            {
-                return Problem("Entity set 'DbclinicaContext.Pacientes'  is null.");
-            }
-            var paciente = await _context.Pacientes.FindAsync(id);
-            if (paciente != null)
-            {
-                _context.Pacientes.Remove(paciente);
-            }
-            
-            await _context.SaveChangesAsync();
+            await APIServices.DeletePacient(id);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool PacienteExists(int id)
+        [Authorize]
+        [HttpPost]
+        public async Task<JsonResult> GetRoleJson()
         {
-          return (_context.Pacientes?.Any(e => e.Id == id)).GetValueOrDefault();
+            int id = Convert.ToInt32(HttpContext.Request.Form["pacientId"].FirstOrDefault().ToString());
+            var rol = await APIServices.GetPacient(id);
+            var jsonresult = new { rol };
+            return Json(jsonresult);
         }
     }
 }

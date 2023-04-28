@@ -1,8 +1,8 @@
 ﻿using ClinicaModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Transactions;
-using ClinicaModels;
 using APIClinica.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace APIClinica.Controllers
 {
@@ -10,122 +10,104 @@ namespace APIClinica.Controllers
     [Route("Consulta")]
     public class ConsultaController : Controller
     {
-        [Route("GetConsultaList")]
-        [HttpGet]
-        public async Task<IEnumerable<Consulta>> GetList()
+        [HttpGet("GetConsultasList")]
+        public async Task<ActionResult<IEnumerable<Models.Consultum>>> GetList()
         {
+
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            IEnumerable<Consulta> consultas = _ClinicaContext.Consulta.Select(s =>
-            new Consulta
+            if (_ClinicaContext.Consulta == null)
             {
-                Idcaso = s.Idcaso,
-                FechaDeConsulta = s.FechaDeConsulta,
-                DatosSubjetivos = s.DatosSubjetivos,
-                DatosObjetivos = s.DatosObjetivos,
-                PlanTerapuetico = s.PlanTerapuetico,
-                NuevosDatos = s.NuevosDatos,
-                Estado = s.Estado
+                return NotFound();
             }
-            ).ToList();
-            return consultas;
+            return await _ClinicaContext.Consulta.ToListAsync();
         }
 
-        [Route("GetConsulta")]
-        [HttpGet]
-        public Consulta Get(int id)
+        [HttpGet("GetConsulta/{id}")]
+        public async Task<ActionResult<Models.Consultum>> Get(int id)
         {
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            Consulta consulta = _ClinicaContext.Consulta.Select(s =>
-            new Consulta
+            if (_ClinicaContext.Consulta == null)
             {
-                 Idcaso = s.Idcaso,
-                 FechaDeConsulta = s.FechaDeConsulta,
-                 DatosSubjetivos  = s.DatosSubjetivos,
-                 DatosObjetivos  = s.DatosObjetivos,
-                 PlanTerapuetico = s.PlanTerapuetico,
-                 NuevosDatos = s.NuevosDatos,
-                 Estado = s.Estado
-            }).FirstOrDefault(s => s.Id == id);
+                return NotFound();
+            }
+            var consulta = await _ClinicaContext.Consulta.FindAsync(id);
+
+            if (consulta == null)
+            {
+                return NotFound();
+            }
             return consulta;
         }
 
-        [Route("CreateConsulta")]
-        [HttpPost]
-        public async void Create(Consulta consulta)
+
+        [HttpPut("EditConsulta/{id}")]
+        public async Task<IActionResult> Put(int id, Models.Consultum consulta)
         {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (id != consulta.Id)
+            {
+                return BadRequest();
+            }
+
+            _ClinicaContext.Entry(consulta).State = EntityState.Modified;
+
             try
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                Consultum _consulta = new Consultum
-                {
-                    Idcaso = consulta.Idcaso,
-                    FechaDeConsulta = consulta.FechaDeConsulta,
-                    DatosSubjetivos = consulta.DatosSubjetivos,
-                    DatosObjetivos = consulta.DatosObjetivos,
-                    PlanTerapuetico = consulta.PlanTerapuetico,
-                    NuevosDatos = consulta.NuevosDatos,
-                    Estado = consulta.Estado
-                };
-                _ClinicaContext.Consulta.Add(_consulta);
                 await _ClinicaContext.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch (DbUpdateConcurrencyException)
             {
-
-            }
-        }
-
-        [Route("DeleteConsulta")]
-        [HttpDelete]
-        public async void Delete(int id)
-        {
-            using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                try
+                if (!ConsultaExists(id))
                 {
-                    DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                    var consulta = await _ClinicaContext.Consulta.FindAsync(id);
-                    if (consulta != null)
-                    {
-                        _ClinicaContext.Consulta.Remove(consulta);
-                    }
-                    await _ClinicaContext.SaveChangesAsync();
-                    transaction.Complete();
+                    return NotFound();
                 }
-                catch (Exception ex)
+                else
                 {
-                    // Revertir la transacción
-                    transaction.Dispose();
                     throw;
                 }
             }
+
+            return NoContent();
         }
 
-        [Route("EditConsulta")]
-        [HttpPut]
-        public async void Edit(Consulta consulta)
+        [HttpPost("CreateConsulta")]
+        public async Task<ActionResult<Models.Consultum>> Post(Models.Consultum consulta)
         {
-            try
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Consulta == null)
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                Consultum _consulta = new Consultum
-                {
-                    Id = consulta.Id,
-                    Idcaso = consulta.Idcaso,
-                    FechaDeConsulta = consulta.FechaDeConsulta,
-                    DatosSubjetivos = consulta.DatosSubjetivos,
-                    DatosObjetivos = consulta.DatosObjetivos,
-                    PlanTerapuetico = consulta.PlanTerapuetico,
-                    NuevosDatos = consulta.NuevosDatos,
-                    Estado = consulta.Estado
-                };
-                _ClinicaContext.Consulta.Update(_consulta);
-                await _ClinicaContext.SaveChangesAsync();
+                return Problem("Entity set 'ClinicaContext.Consulta' is null.");
             }
-            catch (Exception ex)
-            {
+            _ClinicaContext.Consulta.Add(consulta);
+            await _ClinicaContext.SaveChangesAsync();
 
+            return CreatedAtAction("Get", new { id = consulta.Id }, consulta);
+        }
+
+        [HttpDelete("DeleteConsulta/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Consulta == null)
+            {
+                return NotFound();
             }
+            var consulta = await _ClinicaContext.Consulta.FindAsync(id);
+            if (consulta == null)
+            {
+                return NotFound();
+            }
+
+            _ClinicaContext.Consulta.Remove(consulta);
+            await _ClinicaContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool ConsultaExists(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            return (_ClinicaContext.Consulta?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

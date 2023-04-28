@@ -17,5 +17,5 @@ public partial class User
 
     public virtual ICollection<Caso> Casos { get; set; } = new List<Caso>();
 
-    public virtual Role RolNavigation { get; set; } = null!;
+    public virtual Role? RolNavigation { get; set; } = null!;
 }

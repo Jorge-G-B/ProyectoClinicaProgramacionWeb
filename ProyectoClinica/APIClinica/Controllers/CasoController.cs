@@ -1,145 +1,115 @@
 ﻿using ClinicaModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Transactions;
-using ClinicaModels;
 using APIClinica.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace APIClinica.Controllers
 {
     [ApiController]
-    [Route("Caso")]
+    [Route("Case")]
     public class CasoController : Controller
     {
-        [Route("GetCasoList")]
-        [HttpGet]
-        public async Task<IEnumerable<ClinicaModels.Caso>> GetList()
+        [HttpGet("GetCasesList")]
+        public async Task<ActionResult<IEnumerable<Models.Caso>>> GetList()
         {
+
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            IEnumerable<ClinicaModels.Caso> casos = _ClinicaContext.Casos.Select(s =>
-            new ClinicaModels.Caso
+            if (_ClinicaContext.Casos == null)
             {
-               FechaDeApertura = s.FechaDeApertura,
-               UsuarioCrea = s.UsuarioCrea,
-               Idpaciente = s.Idpaciente,
-               MotivoConsulta = s.MotivoConsulta,
-               Antecedentes = s.Antecedentes,
-               Diagnostico = s.Diagnostico,
-               ReferidoPor = s.ReferidoPor,
-               Estado = s.Estado,
-               FechaDeCierre = s.FechaDeCierre,
-               MotivoDeCierre = s.MotivoDeCierre
+                return NotFound();
             }
-            ).ToList();
-            return casos;
+            return await _ClinicaContext.Casos.ToListAsync();
         }
 
-        [Route("GetCaso")]
-        [HttpGet]
-        public ClinicaModels.Caso Get(int id)
+        [HttpGet("GetCase/{id}")]
+        public async Task<ActionResult<Models.Caso>> Get(int id)
         {
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            ClinicaModels.Caso caso = _ClinicaContext.Casos.Select(s =>
-            new ClinicaModels.Caso
+            if (_ClinicaContext.Casos == null)
             {
-                FechaDeApertura = s.FechaDeApertura,
-                UsuarioCrea = s.UsuarioCrea,
-                Idpaciente = s.Idpaciente,
-                MotivoConsulta = s.MotivoConsulta,
-                Antecedentes = s.Antecedentes,
-                Diagnostico = s.Diagnostico,
-                ReferidoPor = s.ReferidoPor,
-                Estado = s.Estado,
-                FechaDeCierre = s.FechaDeCierre,
-                MotivoDeCierre = s.MotivoDeCierre
+                return NotFound();
             }
-            ).FirstOrDefault(s => s.Id == id);
+            var caso = await _ClinicaContext.Casos.FindAsync(id);
+
+            if (caso == null)
+            {
+                return NotFound();
+            }
             return caso;
         }
 
-        [Route("CreateCaso")]
-        [HttpPost]
-        public async void Create(ClinicaModels.Caso caso)
+
+        [HttpPut("EditCase/{id}")]
+        public async Task<IActionResult> Put(int id, Models.Caso caso)
         {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (id != caso.Id)
+            {
+                return BadRequest();
+            }
+
+            _ClinicaContext.Entry(caso).State = EntityState.Modified;
+
             try
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                Models.Caso _caso = new Models.Caso
-                {
-                    FechaDeApertura = caso.FechaDeApertura,
-                    UsuarioCrea = caso.UsuarioCrea,
-                    Idpaciente = caso.Idpaciente,
-                    MotivoConsulta = caso.MotivoConsulta,
-                    Antecedentes = caso.Antecedentes,
-                    Diagnostico = caso.Diagnostico,
-                    ReferidoPor = caso.ReferidoPor,
-                    Estado = caso.Estado,
-                    FechaDeCierre = caso.FechaDeCierre,
-                    MotivoDeCierre = caso.MotivoDeCierre
-                };
-                _ClinicaContext.Casos.Add(_caso);
                 await _ClinicaContext.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch (DbUpdateConcurrencyException)
             {
-
-            }
-        }
-
-        [Route("DeleteCaso")]
-        [HttpDelete]
-        public async void Delete(int id)
-        {
-            using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                try
+                if (!CaseExists(id))
                 {
-                    DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                    var caso = await _ClinicaContext.Casos.FindAsync(id);
-                    if (caso != null)
-                    {
-                        _ClinicaContext.Casos.Remove(caso);
-                    }
-                    await _ClinicaContext.SaveChangesAsync();
-                    transaction.Complete();
+                    return NotFound();
                 }
-                catch (Exception ex)
+                else
                 {
-                    // Revertir la transacción
-                    transaction.Dispose();
                     throw;
                 }
             }
+
+            return NoContent();
         }
 
-        [Route("EditCaso")]
-        [HttpPut]
-        public async void Edit(ClinicaModels.Caso caso)
+        [HttpPost("CreateCase")]
+        public async Task<ActionResult<Models.Caso>> Post(Models.Caso caso)
         {
-            try
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Casos == null)
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                Models.Caso _caso = new Models.Caso
-                {
-
-                    Id = caso.Id,
-                    FechaDeApertura = caso.FechaDeApertura,
-                    UsuarioCrea = caso.UsuarioCrea,
-                    Idpaciente = caso.Idpaciente,
-                    MotivoConsulta = caso.MotivoConsulta,
-                    Antecedentes = caso.Antecedentes,
-                    Diagnostico = caso.Diagnostico,
-                    ReferidoPor = caso.ReferidoPor,
-                    Estado = caso.Estado,
-                    FechaDeCierre = caso.FechaDeCierre,
-                    MotivoDeCierre = caso.MotivoDeCierre
-                };
-                _ClinicaContext.Casos.Update(_caso);
-                await _ClinicaContext.SaveChangesAsync();
+                return Problem("Entity set 'ClinicaContext.Casos' is null.");
             }
-            catch (Exception ex)
+            _ClinicaContext.Casos.Add(caso);
+            await _ClinicaContext.SaveChangesAsync();
+
+            return CreatedAtAction("Get", new { id = caso.Id }, caso);
+        }
+
+        [HttpDelete("DeleteCase/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Casos == null)
             {
-
+                return NotFound();
             }
+            var caso = await _ClinicaContext.Casos.FindAsync(id);
+            if (caso == null)
+            {
+                return NotFound();
+            }
+
+            _ClinicaContext.Casos.Remove(caso);
+            await _ClinicaContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool CaseExists(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            return (_ClinicaContext.Casos?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

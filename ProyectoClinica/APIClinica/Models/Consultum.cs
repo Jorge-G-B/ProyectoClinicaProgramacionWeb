@@ -21,5 +21,5 @@ public partial class Consultum
 
     public string Estado { get; set; } = null!;
 
-    public virtual Caso IdcasoNavigation { get; set; } = null!;
+    public virtual Caso? IdcasoNavigation { get; set; } = null!;
 }

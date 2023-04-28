@@ -1,8 +1,8 @@
 ﻿using ClinicaModels;
 using Microsoft.AspNetCore.Mvc;
 using System.Transactions;
-using ClinicaModels;
 using APIClinica.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace APIClinica.Controllers
 {
@@ -12,110 +12,103 @@ namespace APIClinica.Controllers
     {
         [Route("GetUsersList")]
         [HttpGet]
-        public async Task<IEnumerable<Usuario>> GetList()
+        public async Task<ActionResult<IEnumerable<User>>> GetList()
         {
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            IEnumerable<Usuario> usuarios = _ClinicaContext.Users.Select(s =>
-            new Usuario
+            if (_ClinicaContext.Users == null)
             {
-                Id = s.Id,
-                User1 = s.User1,
-                Correo = s.Correo,
-                Rol = s.Rol
+                return NotFound();
             }
-            ).ToList();
-            return usuarios;
+            return await _ClinicaContext.Users.ToListAsync();
         }
 
-        [Route("GetUser")]
-        [HttpGet]
-        public Usuario Get(int id)
+        [HttpGet("GetUser/{id}")]
+        public async Task<ActionResult<User>> Get(int id)
         {
             DbclinicaContext _ClinicaContext = new DbclinicaContext();
-            Usuario usuario = _ClinicaContext.Users.Select(s =>
-            new Usuario
+            if (_ClinicaContext.Users == null)
             {
-                Id = s.Id,
-                User1 = s.User1,
-                Correo = s.Correo,
-                Rol = s.Rol,
-                Contraseña = s.Contraseña
+                return NotFound();
             }
-            ).FirstOrDefault(s => s.Id == id);
-            return usuario;
+            var user = await _ClinicaContext.Users.FindAsync(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return user;
         }
 
-        [Route("CreateUser")]
-        [HttpPost]
-        public async void Create(Usuario user)
+
+        [HttpPut("EditUser/{id}")]
+        public async Task<IActionResult> Put(int id, User user)
         {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (id != user.Id)
+            {
+                return BadRequest();
+            }
+
+            _ClinicaContext.Entry(user).State = EntityState.Modified;
+
             try
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                User _user = new User
-                {
-                    User1 = user.User1,
-                    Correo = user.Correo,
-                    Contraseña = user.Contraseña,
-                    Rol = user.Rol
-                };
-                _ClinicaContext.Users.Add(_user);
                 await _ClinicaContext.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch (DbUpdateConcurrencyException)
             {
-
-            }
-        }
-
-        [Route("DeleteUser")]
-        [HttpDelete]
-        public async void Delete(int id)
-        {
-            using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                try
+                if (!UserExists(id))
                 {
-                    DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                    var user = await _ClinicaContext.Users.FindAsync(id);
-                    if (user != null)
-                    {
-                        _ClinicaContext.Users.Remove(user);
-                    }
-                    await _ClinicaContext.SaveChangesAsync();
-                    transaction.Complete();
+                    return NotFound();
                 }
-                catch (Exception ex)
+                else
                 {
-                    // Revertir la transacción
-                    transaction.Dispose();
                     throw;
                 }
             }
+
+            return NoContent();
         }
 
-        [Route("EditUser")]
-        [HttpPut]
-        public async void Edit(Usuario user)
+        [HttpPost("CreateUser")]
+        public async Task<ActionResult<User>> Post(User user)
         {
-            try
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Users == null)
             {
-                DbclinicaContext _ClinicaContext = new DbclinicaContext();
-                User _user = new User
-                {
-                    Id = user.Id,
-                    User1 = user.User1,
-                    Correo = user.Correo,
-                    Contraseña = user.Contraseña,
-                    Rol = user.Rol
-                };
-                _ClinicaContext.Users.Update(_user);
-                await _ClinicaContext.SaveChangesAsync();
+                return Problem("Entity set 'ClinicaContext.User' is null.");
             }
-            catch (Exception ex)
-            {
+            _ClinicaContext.Users.Add(user);
+            await _ClinicaContext.SaveChangesAsync();
 
+            return CreatedAtAction("Get", new { id = user.Id }, user);
+        }
+
+        [HttpDelete("DeleteUser/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            if (_ClinicaContext.Users == null)
+            {
+                return NotFound();
             }
+            var user = await _ClinicaContext.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            _ClinicaContext.Users.Remove(user);
+            await _ClinicaContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool UserExists(int id)
+        {
+            DbclinicaContext _ClinicaContext = new DbclinicaContext();
+            return (_ClinicaContext.Users?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

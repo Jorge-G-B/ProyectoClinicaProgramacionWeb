@@ -5,7 +5,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Protocol.Plugins;
 using ProyectoClinica.Models;
+using ProyectoClinica.Services;
+using ClinicaModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ProyectoClinica.Controllers
 {
@@ -13,155 +17,89 @@ namespace ProyectoClinica.Controllers
     {
         private readonly DbclinicaContext _context;
 
+
         public UsersController()
         {
             _context = new DbclinicaContext();
         }
 
+        [Authorize]
         // GET: Users
         public async Task<IActionResult> Index()
         {
-            var dbclinicaContext = _context.Users.Include(u => u.RolNavigation);
-            return View(await dbclinicaContext.ToListAsync());
+            IEnumerable<Usuario> users = await APIServices.GetUsers();
+            foreach (var user in users)
+            {
+                user.RolNavigation = await APIServices.GetRole(user.Rol);
+            }
+            return View(users);
         }
 
         // GET: Users/Details/5
-        public async Task<IActionResult> Details(short? id)
+        [Authorize]
+        public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Users == null)
-            {
-                return NotFound();
-            }
-
-            var user = await _context.Users
-                .Include(u => u.RolNavigation)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
+            Usuario user = await APIServices.GetUser(id);
+            user.RolNavigation = await APIServices.GetRole(user.Rol);
             return View(user);
         }
-
-        // GET: Users/Create
-        public IActionResult Create()
+        [Authorize]
+        public async Task<IActionResult> Create()
         {
-            ViewData["Rol"] = new SelectList(_context.Roles, "Id", "Id");
+            var roles = await APIServices.GetRoles();
+            ViewData["Rol"] = new SelectList(roles, "Id", "Description");
             return View();
         }
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Create(Usuario user)
+        {
+            await APIServices.CreateUser(user);
+            return RedirectToAction(nameof(Index));
+        }
+        [Authorize]
+        public async Task<IActionResult> Edit(int? id)
+        {
+            var user = await APIServices.GetUser(id);
+            var roles = await APIServices.GetRoles();
+            ViewData["Rol"] = new SelectList(roles, "Id", "Description");
+            return View(user);
+        }
 
-        // POST: Users/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,User1,Rol,Correo,Contraseña")] User user)
+        public async Task<IActionResult> Edit(Usuario user)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(user);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["Rol"] = new SelectList(_context.Roles, "Id", "Id", user.Rol);
-            return View(user);
-        }
-
-        // GET: Users/Edit/5
-        public async Task<IActionResult> Edit(short? id)
-        {
-            if (id == null || _context.Users == null)
-            {
-                return NotFound();
-            }
-
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            ViewData["Rol"] = new SelectList(_context.Roles, "Id", "Id", user.Rol);
-            return View(user);
-        }
-
-        // POST: Users/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(short id, [Bind("Id,User1,Rol,Correo,Contraseña")] User user)
-        {
-            if (id != user.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(user);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!UserExists(user.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["Rol"] = new SelectList(_context.Roles, "Id", "Id", user.Rol);
-            return View(user);
-        }
-
-        // GET: Users/Delete/5
-        public async Task<IActionResult> Delete(short? id)
-        {
-            if (id == null || _context.Users == null)
-            {
-                return NotFound();
-            }
-
-            var user = await _context.Users
-                .Include(u => u.RolNavigation)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            return View(user);
-        }
-
-        // POST: Users/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(short id)
-        {
-            if (_context.Users == null)
-            {
-                return Problem("Entity set 'DbclinicaContext.Users'  is null.");
-            }
-            var user = await _context.Users.FindAsync(id);
-            if (user != null)
-            {
-                _context.Users.Remove(user);
-            }
-            
-            await _context.SaveChangesAsync();
+            await APIServices.EditUser(user);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool UserExists(int id)
+        [Authorize]
+        public async Task<IActionResult> Delete(int? id)
         {
-          return (_context.Users?.Any(e => e.Id == id)).GetValueOrDefault();
+            Usuario user = await APIServices.GetUser(id);
+            user.RolNavigation = await APIServices.GetRole(user.Rol);
+            return View(user);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            await APIServices.DeleteUser(id);
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<JsonResult> GetUserJson()
+        {
+            short id = (short)Convert.ToInt32(HttpContext.Request.Form["userId"].FirstOrDefault().ToString());
+            var rol = await APIServices.GetUser(id);
+            var jsonresult = new { rol };
+            return Json(jsonresult);
         }
     }
 }

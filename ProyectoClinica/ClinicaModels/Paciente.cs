@@ -10,7 +10,8 @@ namespace ClinicaModels
     {
         public int Id { get; set; }
 
-        public string Nombre { get; set; } = null!;
+        public string NombreC { get; set; } = null!;
+        public string NombreF { get; set; } = null!;
         public string Pnombre { get; set; } = null!;
 
         public string Snombre { get; set; } = null!;
@@ -32,5 +33,6 @@ namespace ClinicaModels
         public string NombreResponsable { get; set; } = null!;
 
         public int TelResponsable { get; set; }
+
     }
 }

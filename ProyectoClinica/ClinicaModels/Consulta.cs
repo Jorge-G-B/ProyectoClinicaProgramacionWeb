@@ -23,5 +23,6 @@ namespace ClinicaModels
         public string NuevosDatos { get; set; } = null!;
 
         public string Estado { get; set; } = null!;
+        public virtual Caso? IdcasoNavigation { get; set; } = null!;
     }
 }

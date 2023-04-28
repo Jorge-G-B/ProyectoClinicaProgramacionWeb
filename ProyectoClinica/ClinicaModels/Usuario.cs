@@ -17,5 +17,8 @@ namespace ClinicaModels
         public string Correo { get; set; } = null!;
 
         public string Contraseña { get; set; } = null!;
+        public virtual ICollection<Caso>? Casos { get; } = new List<Caso>();
+
+        public Rol? RolNavigation { get; set; } = null!;
     }
 }

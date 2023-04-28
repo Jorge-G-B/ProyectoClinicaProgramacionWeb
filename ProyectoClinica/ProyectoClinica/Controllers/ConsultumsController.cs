@@ -2,10 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ClinicaModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProyectoClinica.Models;
+using ProyectoClinica.Services;
 
 namespace ProyectoClinica.Controllers
 {
@@ -18,36 +21,36 @@ namespace ProyectoClinica.Controllers
             _context = new DbclinicaContext();
         }
 
+        [Authorize]
         // GET: Consultums
         public async Task<IActionResult> Index()
         {
-            var dbclinicaContext = _context.Consulta.Include(c => c.IdcasoNavigation);
-            return View(await dbclinicaContext.ToListAsync());
+            IEnumerable<Consulta> consultas = await APIServices.GetConsultations();
+            foreach (var consulta in consultas)
+            {
+                consulta.IdcasoNavigation = await APIServices.GetCase(consulta.Idcaso);
+                consulta.IdcasoNavigation.IdpacienteNavigation = await APIServices.GetPacient(consulta.IdcasoNavigation.Idpaciente);
+                consulta.IdcasoNavigation.IdpacienteNavigation.NombreC = consulta.IdcasoNavigation.IdpacienteNavigation.Pnombre + " " + consulta.IdcasoNavigation.IdpacienteNavigation.Papellido;
+
+            }
+            return View(consultas);
         }
 
         // GET: Consultums/Details/5
-        public async Task<IActionResult> Details(long? id)
+        [Authorize]
+        public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Consulta == null)
-            {
-                return NotFound();
-            }
-
-            var consultum = await _context.Consulta
-                .Include(c => c.IdcasoNavigation)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (consultum == null)
-            {
-                return NotFound();
-            }
-
-            return View(consultum);
+            Consulta consulta = await APIServices.GetConsultation(id);
+            consulta.IdcasoNavigation = await APIServices.GetCase(consulta.Idcaso);
+            consulta.IdcasoNavigation.IdpacienteNavigation = await APIServices.GetPacient(consulta.IdcasoNavigation.Idpaciente);
+            consulta.IdcasoNavigation.IdpacienteNavigation.NombreC = consulta.IdcasoNavigation.IdpacienteNavigation.Pnombre + " " + consulta.IdcasoNavigation.IdpacienteNavigation.Papellido;
+            return View(consulta);
         }
-
-        // GET: Consultums/Create
-        public IActionResult Create()
+        [Authorize]
+        public async Task<IActionResult> Create()
         {
-            ViewData["Idcaso"] = new SelectList(_context.Casos, "Id", "Id");
+            var cases = await APIServices.GetCases();
+            ViewData["Idcaso"] = new SelectList(cases, "Id", "Id");
             return View();
         }
 
@@ -56,33 +59,21 @@ namespace ProyectoClinica.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Idcaso,FechaDeConsulta,DatosSubjetivos,DatosObjetivos,PlanTerapuetico,NuevosDatos,Estado")] Consultum consultum)
+        [Authorize]
+        public async Task<IActionResult> Create(Consulta consulta)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(consultum);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["Idcaso"] = new SelectList(_context.Casos, "Id", "Id", consultum.Idcaso);
-            return View(consultum);
+            consulta.Estado = "Activo";
+            await APIServices.CreateConsultation(consulta);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Consultums/Edit/5
-        public async Task<IActionResult> Edit(long? id)
+        public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Consulta == null)
-            {
-                return NotFound();
-            }
-
-            var consultum = await _context.Consulta.FindAsync(id);
-            if (consultum == null)
-            {
-                return NotFound();
-            }
-            ViewData["Idcaso"] = new SelectList(_context.Casos, "Id", "Id", consultum.Idcaso);
-            return View(consultum);
+            var consulta = await APIServices.GetConsultation(id);
+            var cases = await APIServices.GetCases();
+            ViewData["Idcaso"] = new SelectList(cases, "Id", "Id");
+            return View(consulta);
         }
 
         // POST: Consultums/Edit/5
@@ -90,78 +81,40 @@ namespace ProyectoClinica.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(long id, [Bind("Id,Idcaso,FechaDeConsulta,DatosSubjetivos,DatosObjetivos,PlanTerapuetico,NuevosDatos,Estado")] Consultum consultum)
+        [Authorize]
+        public async Task<IActionResult> Edit(Consulta consultum)
         {
-            if (id != consultum.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(consultum);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ConsultumExists(consultum.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["Idcaso"] = new SelectList(_context.Casos, "Id", "Id", consultum.Idcaso);
-            return View(consultum);
+            await APIServices.EditConsultation(consultum);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Consultums/Delete/5
-        public async Task<IActionResult> Delete(long? id)
+        [Authorize]
+        public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Consulta == null)
-            {
-                return NotFound();
-            }
-
-            var consultum = await _context.Consulta
-                .Include(c => c.IdcasoNavigation)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (consultum == null)
-            {
-                return NotFound();
-            }
-
-            return View(consultum);
+            Consulta consulta = await APIServices.GetConsultation(id);
+            consulta.IdcasoNavigation = await APIServices.GetCase(consulta.Idcaso);
+            return View(consulta);
         }
 
         // POST: Consultums/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(long id)
+        [Authorize]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Consulta == null)
-            {
-                return Problem("Entity set 'DbclinicaContext.Consulta'  is null.");
-            }
-            var consultum = await _context.Consulta.FindAsync(id);
-            if (consultum != null)
-            {
-                _context.Consulta.Remove(consultum);
-            }
-            
-            await _context.SaveChangesAsync();
+            await APIServices.DeleteConsultation(id);
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ConsultumExists(long id)
+        [HttpPost]
+        [Authorize]
+        public async Task<JsonResult> GetConsultaJson()
         {
-          return (_context.Consulta?.Any(e => e.Id == id)).GetValueOrDefault();
+            int id = Convert.ToInt32(HttpContext.Request.Form["consultaId"].FirstOrDefault().ToString());
+            var rol = await APIServices.GetConsultation(id);
+            var jsonresult = new { rol };
+            return Json(jsonresult);
         }
     }
 }

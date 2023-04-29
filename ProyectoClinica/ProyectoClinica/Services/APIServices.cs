@@ -9,7 +9,7 @@ namespace ProyectoClinica.Services
     {
         private static HttpClient _client = new();
         private static HttpClientHandler _clientHandler = new();
-        private static string url = "https://localhost:7026/";
+        private static string url = "http://localhost:7026/";
 
         public static string token = "";
 
